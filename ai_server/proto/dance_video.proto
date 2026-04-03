@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package ai_server.proto;
+
+message DanceVideoChunk {
+  bytes video_chunk = 1;
+  int32 chunk_index = 2;
+  int64 timestamp_ms = 3;
+}
+
+message DanceVideoProgress {
+  bool success = 1;
+  string message = 2;
+  int32 chunk_index = 3;
+  bool is_final = 4;
+  double calories_burned = 5;
+  double total_calories = 6;
+  double movement_score = 7;
+  double current_met = 8;
+}
+
+service DanceVideoStreamService {
+  rpc StreamDanceVideo(stream DanceVideoChunk) returns (stream DanceVideoProgress);
+}
