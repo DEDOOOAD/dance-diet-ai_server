@@ -4,4 +4,16 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi",
+    "grpcio>=1.80.0",
+    "grpcio-tools>=1.80.0",
+    "mediapipe",
+    "numpy",
+    "opencv-python",
+    "openpyxl",
+    "pandas",
+    "pydantic",
+    "ultralytics",
+    "uvicorn",
+]

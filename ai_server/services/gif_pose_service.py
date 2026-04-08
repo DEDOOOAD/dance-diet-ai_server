@@ -5,12 +5,12 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-from servers.ai_server.config import POSE_MODEL_PATH
-from servers.shared.schemas import GifAnalysisRequest, GifAnalysisResponse
+from ai_server.config import POSE_MODEL_PATH
+from schemas import GifAnalysisRequest, GifAnalysisResponse
 
 
 def analyze_gif_file(request: GifAnalysisRequest) -> GifAnalysisResponse:
-    base_options = python.BaseOptions(model_asset_path=POSE_MODEL_PATH)
+    base_options = python.BaseOptions(model_asset_path=str(POSE_MODEL_PATH))
     options = vision.PoseLandmarkerOptions(base_options=base_options, running_mode=vision.RunningMode.VIDEO)
 
     processed_frames = 0

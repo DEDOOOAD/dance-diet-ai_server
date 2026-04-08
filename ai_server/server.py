@@ -1,25 +1,21 @@
 from __future__ import annotations
 
+import uvicorn
 from fastapi import FastAPI
-import base64
 
-from ai_server.config import APP_NAME
-from ai_server.services.gif_pose_service import analyze_gif_file
-from ai_server.services.pose_metrics import analyze_pose_request
-from schemas import GifAnalysisRequest, GifAnalysisResponse, PoseAnalysisRequest, PoseAnalysisResponse, ServerInfo, FoodAnalysisResponse, FoodAnalysisRequest
-from ai_server.services.food_pipeline import analyze_food_pipeline
+from ai_server.config import APP_NAME, HOST, PORT
+from ai_server.controllers.dance_controller import router as dance_router
+from ai_server.controllers.food_controller import router as food_router
+
 
 app = FastAPI(
-    title="AI Analysis API",
+    title=APP_NAME,
     version="1.0.0",
-    description="AI server for pose and GIF analysis.",
+    description="AI server for Dance and Food analysis.",
 )
 
-@app.post("/analyze/pose", response_model=PoseAnalysisResponse)
-def analyze_pose(request: PoseAnalysisRequest) -> PoseAnalysisResponse:
-    return analyze_pose_request(request)
+app.include_router(dance_router)
+app.include_router(food_router)
 
-@app.post("/food/analyze", response_model=FoodAnalysisResponse)
-async def food_analyze(request: FoodAnalysisRequest) -> FoodAnalysisResponse:
-    jpg_bytes = base64.b64decode(request.image_base64)
-    return await analyze_food_pipeline(request.uuid, jpg_bytes)
+if __name__ == "__main__":
+    uvicorn.run("ai_server.server:app", host=HOST, port=PORT, reload=True)

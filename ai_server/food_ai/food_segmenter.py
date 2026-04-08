@@ -2,41 +2,44 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import cv2
 import numpy as np
-from ultralytics import YOLO
 
-BASE_DIR = Path(__file__).resolve().parents[3]
-MODEL1_PATH = BASE_DIR / "ai_server" / "models" / "food_segmenter.pt"  # 이미지 분할 모델
+BASE_DIR = Path(__file__).resolve().parents[2]
+MODEL1_PATH = BASE_DIR / "ai_server" / "models" / "food_segmenter.pt"
 
 
 @lru_cache(maxsize=1)
-def load_segment_model() -> YOLO:
+def load_segment_model() -> Any:
     if not MODEL1_PATH.exists():
-        raise FileNotFoundError(f"음식 이미지 분할 모델 파일이 없습니다: {MODEL1_PATH}")
+        raise FileNotFoundError(f"Food segmentation model file does not exist: {MODEL1_PATH}")
+
+    from ultralytics import YOLO
 
     return YOLO(str(MODEL1_PATH))
 
-def decode_bytes(jpg_bytes: bytes) -> np.ndarray | None:
+
+def decode_image(jpg_bytes: bytes) -> np.ndarray | None:
     if not jpg_bytes:
         return None
 
-    decode_img = np.frombuffer(jpg_bytes, dtype=np.uint8)
-    img = cv2.imdecode(decode_img, cv2.IMREAD_COLOR)
-
-    if img is None or img.size == 0:
+    encoded_image = np.frombuffer(jpg_bytes, dtype=np.uint8)
+    image = cv2.imdecode(encoded_image, cv2.IMREAD_COLOR)
+    if image is None or image.size == 0:
         return None
 
-    return img
+    return image
+
 
 def encode_image(image: np.ndarray) -> bytes | None:
     success, jpg_buffer = cv2.imencode(".jpg", image)
-
     if not success:
         return None
 
     return jpg_buffer.tobytes()
+
 
 def image_crop(result, image: np.ndarray) -> list[bytes]:
     if result.boxes is None or len(result.boxes) == 0:
@@ -69,6 +72,7 @@ def image_crop(result, image: np.ndarray) -> list[bytes]:
 
     return segmented_images
 
+
 def segment_food_image(image: np.ndarray) -> list[bytes]:
     model = load_segment_model()
     result = model.predict(source=image, verbose=False)
@@ -77,8 +81,9 @@ def segment_food_image(image: np.ndarray) -> list[bytes]:
 
     return image_crop(result[0], image)
 
+
 def run_segmentation_model(jpg_bytes: bytes) -> list[bytes]:
-    image = decode_bytes(jpg_bytes)
+    image = decode_image(jpg_bytes)
     if image is None:
         return []
 
