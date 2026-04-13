@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from schemas import PoseAnalysisRequest, PoseAnalysisResponse
-from ai_server.services.dance_service import analyze_dance
+from ai_server.services.dance_service import analyze_dance, clear_session
 
 router = APIRouter(prefix="/dance", tags=["dance"])
 
@@ -10,20 +9,32 @@ router = APIRouter(prefix="/dance", tags=["dance"])
 # async def dance_analyze(request: PoseAnalysisRequest) -> PoseAnalysisResponse:
 #     return await analyze_dance(request)
 
-@router.websocket("/analyze")
-async def dance_analyze(websocket: WebSocket):
+@router.websocket("/analyze/{session_id}")
+async def dance_analyze(websocket: WebSocket, session_id: str):
+    stream_type = websocket.headers.get("x-stream-type")
+
+    if stream_type != "frame":
+        await websocket.close()
+        return
+
     await websocket.accept()
-    print("메인 서버와 연결되었습니다.")
+
+    print(f"[{session_id}] 메인 서버와 연결되었습니다.")
 
     try:
         while True:
-            message = await websocket.receive()
-            if message.get("bytes") is not None:
-                print(f"메인 서버로부터 영상 데이터 수신: {len(message['bytes'])} bytes")
-
-            result = await analyze_dance(message)
+            frame_bytes = await websocket.receive_bytes()
+            result = await analyze_dance(session_id, frame_bytes)
             if result is not None:
-                await websocket.send_json(result)
+                await websocket.send_json(result.model_dump())
     
     except WebSocketDisconnect:
-        print("메인 서버와 연결이 종료되었습니다.")
+        print(f"[{session_id}] 메인 서버와 연결이 종료되었습니다.")
+        await websocket.close()
+
+    except Exception as e:
+        print(f"[{session_id}] 에러: {e}")
+        await websocket.close()
+
+    finally:
+        await clear_session(session_id)

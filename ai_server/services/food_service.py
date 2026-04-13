@@ -22,4 +22,23 @@ def assemble_foods(segments: list[bytes]) -> list[FoodItem]:
 def analyze_food(uuid: str, jpg_bytes: bytes) -> FoodAnalysisResponse:
     segments = run_segmentation_model(jpg_bytes)
     foods = assemble_foods(segments)
-    return FoodAnalysisResponse(uuid=uuid, foods=foods)
+    # return FoodAnalysisResponse(uuid=uuid, foods=foods)
+
+    # 테스트용 목업 데이터
+    test_food = {
+        "uuid": uuid,
+        "foods": 
+        [
+            {
+                "label": "바나나",
+                "calories": 105.0,
+                "confidence": 0.96
+            },
+            {
+                "label": "닭가슴살",
+                "calories": 165.0,
+                "confidence": 0.88
+            }
+        ]
+    }
+    return test_food

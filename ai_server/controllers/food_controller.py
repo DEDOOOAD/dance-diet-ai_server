@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from schemas import FoodAnalysisRequest, FoodAnalysisResponse
 from ai_server.services.food_service import analyze_food
+
 import base64
 
 router = APIRouter(prefix="/food", tags=["food"])

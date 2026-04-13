@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import uvicorn
 from fastapi import FastAPI
 
 from ai_server.config import APP_NAME, HOST, PORT
 from ai_server.controllers.dance_controller import router as dance_router
 from ai_server.controllers.food_controller import router as food_router
 
+import uvicorn
 
 app = FastAPI(
     title=APP_NAME,
