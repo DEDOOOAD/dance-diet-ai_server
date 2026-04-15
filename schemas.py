@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 class LiveFrameMessage(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    type: Literal["frame"] = "frame"
+    type: Literal["frame_base64"] = "frame_base64"
     UUID: str 
     session_id: str
     frame_index: int = Field(ge=0)

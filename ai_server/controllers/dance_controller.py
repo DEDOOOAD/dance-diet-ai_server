@@ -12,12 +12,6 @@ router = APIRouter(prefix="/dance", tags=["dance"])
 
 @router.websocket("/analyze/{session_id}")
 async def dance_analyze(websocket: WebSocket, session_id: str):
-    stream_type = websocket.headers.get("x-stream-type")
-
-    if stream_type != "frame_binary":
-        await websocket.close()
-        return
-
     await websocket.accept()
 
     print(f"[{session_id}] 메인 서버와 연결되었습니다.")
@@ -25,6 +19,50 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
     try:
         while True:
             payload = await websocket.receive_json()
+
+            if not isinstance(payload, dict):
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "payload가 잘못되었습니다.",
+                    }
+                )
+                continue
+
+            payload_session_id = payload.get("session_id")
+            if payload_session_id != session_id:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "session_id 불일치.",
+                        "path_session_id": session_id,
+                        "payload_session_id": payload_session_id,
+                    }
+                )
+                continue
+
+            message_type = payload.get("type")
+
+            if message_type == "ping":
+                await websocket.send_json(
+                    {
+                        "type": "ai_ready",
+                        "session_id": session_id,
+                    }
+                )
+                await websocket.close()
+                return
+
+            if message_type != "frame_base64":
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "type 불일치.",
+                        "expected_type": "frame_base64",
+                        "received_type": message_type,
+                    }
+                )
+                continue
 
             try:
                 frame_message = LiveFrameMessage.model_validate(payload)
@@ -34,17 +72,6 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                         "type": "error",
                         "message": "LiveFrameMessage payload가 잘못되었습니다.",
                         "detail": exc.errors(),
-                    }
-                )
-                continue
-
-            if frame_message.session_id != session_id:
-                await websocket.send_json(
-                    {
-                        "type": "error",
-                        "message": "session_id 불일치",
-                        "path_session_id": session_id,
-                        "payload_session_id": frame_message.session_id,
                     }
                 )
                 continue
@@ -81,4 +108,4 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
         await websocket.close()
 
     finally:
-        await clear_session(session_id)
+        clear_session(session_id)

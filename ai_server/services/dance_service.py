@@ -23,7 +23,7 @@ async def analyze_dance(session_id: str, frame_bytes: bytes) -> PoseAnalysisResp
     if frame is None or frame.size == 0:
         return None
 
-    analysis_result = analyze_pose_frame(frame)
+    # analysis_result = analyze_pose_frame(frame)
 
     # return PoseAnalysisResponse(
     #     movement_score=analysis_result["movement_score"],
@@ -35,7 +35,7 @@ async def analyze_dance(session_id: str, frame_bytes: bytes) -> PoseAnalysisResp
     # 테스트용 목업 데이터
     test_dance = {
         "type": "ai_analysis",
-        "session_id": "session_test_001",
+        "session_id": session_id,
         "processed_at": datetime.now(ZoneInfo("Asia/Seoul")),
         "calories_burned": 0.0,
         "movement_score": 50.0
