@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+import datetime
+from zoneinfo import ZoneInfo
 from ai_server.dance_ai.pose_analyzer import analyze_pose_frame
 from schemas import PoseAnalysisResponse
 
@@ -35,7 +36,7 @@ async def analyze_dance(session_id: str, frame_bytes: bytes) -> PoseAnalysisResp
     test_dance = {
         "type": "ai_analysis",
         "session_id": "session_test_001",
-        "processed_at": "2026-04-13T00:00:00+09:00",
+        "processed_at": datetime.now(ZoneInfo("Asia/Seoul")),
         "calories_burned": 0.0,
         "movement_score": 50.0
     }

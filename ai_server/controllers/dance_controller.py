@@ -1,19 +1,20 @@
 from __future__ import annotations
 
+import base64
+import binascii
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 from ai_server.services.dance_service import analyze_dance, clear_session
+from schemas import LiveFrameMessage
 
 router = APIRouter(prefix="/dance", tags=["dance"])
 
-# @router.post("/analyze", response_model=PoseAnalysisResponse)
-# async def dance_analyze(request: PoseAnalysisRequest) -> PoseAnalysisResponse:
-#     return await analyze_dance(request)
 
 @router.websocket("/analyze/{session_id}")
 async def dance_analyze(websocket: WebSocket, session_id: str):
     stream_type = websocket.headers.get("x-stream-type")
 
-    if stream_type != "frame":
+    if stream_type != "frame_binary":
         await websocket.close()
         return
 
@@ -23,17 +24,60 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
 
     try:
         while True:
-            frame_bytes = await websocket.receive_bytes()
-            result = await analyze_dance(session_id, frame_bytes)
-            if result is not None:
-                await websocket.send_json(result.model_dump())
-    
+            payload = await websocket.receive_json()
+
+            try:
+                frame_message = LiveFrameMessage.model_validate(payload)
+            except ValidationError as exc:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "LiveFrameMessage payload가 잘못되었습니다.",
+                        "detail": exc.errors(),
+                    }
+                )
+                continue
+
+            if frame_message.session_id != session_id:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "session_id 불일치",
+                        "path_session_id": session_id,
+                        "payload_session_id": frame_message.session_id,
+                    }
+                )
+                continue
+
+            try:
+                frame_bytes = base64.b64decode(
+                    frame_message.get_frame_data(),
+                    validate=True,
+                )
+            except (ValueError, binascii.Error) as exc:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "image_base64 payload가 잘못되었습니다.",
+                        "detail": str(exc),
+                    }
+                )
+                continue
+
+            result = await analyze_dance(frame_message.session_id, frame_bytes)
+            if result is None:
+                continue
+
+            if hasattr(result, "model_dump"):
+                await websocket.send_json(result.model_dump(mode="json"))
+            else:
+                await websocket.send_json(result)
+
     except WebSocketDisconnect:
         print(f"[{session_id}] 메인 서버와 연결이 종료되었습니다.")
-        await websocket.close()
 
     except Exception as e:
-        print(f"[{session_id}] 에러: {e}")
+        print(f"[{session_id}] error: {e}")
         await websocket.close()
 
     finally:

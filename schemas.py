@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 # class PosePoint(BaseModel):
@@ -15,11 +17,43 @@ from pydantic import BaseModel, Field
 #     user_weight: float = 60.0
 #     elapsed_seconds: float = 1.0
 
-class PoseAnalysisResponse(BaseModel):
-    movement_score: float
-    current_met: float
-    calories_burned: float
-    landmark_count: int
+# class PoseAnalysisResponse(BaseModel):
+#     movement_score: float
+#     current_met: float
+#     calories_burned: float
+#     landmark_count: int
+
+class LiveFrameMessage(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    type: Literal["frame"] = "frame"
+    UUID: str 
+    session_id: str
+    frame_index: int = Field(ge=0)
+    total_frame: int = Field(ge=0)
+    image_base64: str
+    user_weight: float = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_frame_payload(self) -> "LiveFrameMessage":
+        if not self.image_base64:
+            raise ValueError("One of image_base64 is required.")
+        return self
+
+    def get_frame_data(self) -> str:
+        if self.image_base64:
+            return self.image_base64
+
+        raise ValueError("Frame payload is missing.")
+
+# Y
+class AiLiveAnalysisMessage(BaseModel):
+    type: Literal["ai_analysis"] = "ai_analysis"
+    session_id: str
+    processed_at: datetime
+    calories_burned: float = 0.0
+    movement_score: float = 0.0
+
 
 
 class FoodAnalysisRequest(BaseModel):
