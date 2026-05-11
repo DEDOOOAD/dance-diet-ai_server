@@ -18,4 +18,4 @@ app.include_router(dance_router)
 app.include_router(food_router)
 
 if __name__ == "__main__":
-    uvicorn.run("ai_server.server:app", host=HOST, port=PORT, reload=True)
+    uvicorn.run("ai_server.server:app", host=HOST, port=PORT, reload=False)

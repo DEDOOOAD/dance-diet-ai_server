@@ -30,8 +30,6 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                         "session_id": session_id,
                     }
                 )
-                await websocket.close()
-                return
 
             if message_type == "frame_base64":
                 try:
