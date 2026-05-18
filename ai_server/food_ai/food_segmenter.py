@@ -1,24 +1,20 @@
 from __future__ import annotations
 
-from functools import lru_cache
-from pathlib import Path
-from typing import Any
-
 import cv2
 import numpy as np
-
-BASE_DIR = Path(__file__).resolve().parents[2]
-MODEL1_PATH = BASE_DIR / "ai_server" / "models" / "food_segmenter.pt"
+from functools import lru_cache
+from typing import Any
+from ai_server.config import FOOD_SEGMENTER_MODEL_PATH
 
 
 @lru_cache(maxsize=1)
 def load_segment_model() -> Any:
-    if not MODEL1_PATH.exists():
-        raise FileNotFoundError(f"Food segmentation model file does not exist: {MODEL1_PATH}")
+    if not FOOD_SEGMENTER_MODEL_PATH.exists():
+        raise FileNotFoundError(f"Food segmentation model file does not exist: {FOOD_SEGMENTER_MODEL_PATH}")
 
     from ultralytics import YOLO
 
-    return YOLO(str(MODEL1_PATH))
+    return YOLO(str(FOOD_SEGMENTER_MODEL_PATH))
 
 
 def decode_image(jpg_bytes: bytes) -> np.ndarray | None:

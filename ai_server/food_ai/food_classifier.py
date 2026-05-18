@@ -1,26 +1,23 @@
 from __future__ import annotations
 
+import cv2
+import numpy as np
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
-
-import cv2
-import numpy as np
-
-BASE_DIR = Path(__file__).resolve().parents[2]
-MODEL2_PATH = BASE_DIR / "ai_server" / "models" / "food_classifier.pt"
+from ai_server.config import FOOD_CLASSIFIER_MODEL_PATH
 
 ClassificationResult = tuple[str, float]
 
 
 @lru_cache(maxsize=1)
 def load_classifier_model() -> Any:
-    if not MODEL2_PATH.exists():
-        raise FileNotFoundError(f"Food classification model file does not exist: {MODEL2_PATH}")
+    if not FOOD_CLASSIFIER_MODEL_PATH.exists():
+        raise FileNotFoundError(f"Food classification model file does not exist: {FOOD_CLASSIFIER_MODEL_PATH}")
 
     from ultralytics import YOLO
 
-    return YOLO(str(MODEL2_PATH))
+    return YOLO(str(FOOD_CLASSIFIER_MODEL_PATH))
 
 
 def unknown_prediction() -> ClassificationResult:

@@ -5,24 +5,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
-# class PosePoint(BaseModel):
-#     x: float
-#     y: float
-#     z: float = 0.0
-
-# request 수정
-# class PoseAnalysisRequest(BaseModel):
-#     current_landmarks: list[PosePoint] = Field(default_factory=list)
-#     previous_landmarks: list[PosePoint] = Field(default_factory=list)
-#     user_weight: float = 60.0
-#     elapsed_seconds: float = 1.0
-
-# class PoseAnalysisResponse(BaseModel):
-#     movement_score: float
-#     current_met: float
-#     calories_burned: float
-#     landmark_count: int
-
 class LiveFrameMessage(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -31,22 +13,22 @@ class LiveFrameMessage(BaseModel):
     session_id: str
     frame_index: int = Field(ge=0)
     total_frame: int = Field(ge=0)
-    image_base64: str
+    image: str
     user_weight: float = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def validate_frame_payload(self) -> "LiveFrameMessage":
-        if not self.image_base64:
-            raise ValueError("One of image_base64 is required.")
+        if not self.image:
+            raise ValueError("One of image is required.")
         return self
 
     def get_frame_data(self) -> str:
-        if self.image_base64:
-            return self.image_base64
+        if self.image:
+            return self.image
 
         raise ValueError("Frame payload is missing.")
 
-# Y
+
 class AiLiveAnalysisMessage(BaseModel):
     type: Literal["ai_analysis"] = "ai_analysis"
     session_id: str
