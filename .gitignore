@@ -17,6 +17,3 @@ __dance_diet_client_mobile_tmp/
 
 # Model
 ai_server/models/*.pt
-
-# Model Test
-model_test/

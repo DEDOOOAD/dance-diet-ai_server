@@ -3,7 +3,6 @@ from __future__ import annotations
 import cv2
 import numpy as np
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 from ai_server.config import FOOD_CLASSIFIER_MODEL_PATH
 
@@ -36,8 +35,7 @@ def decode_image(jpg_bytes: bytes) -> np.ndarray | None:
     return image
 
 
-def classify_food_image_array(image: np.ndarray) -> ClassificationResult:
-    model = load_classifier_model()
+def classify_food_image_array(image: np.ndarray, model: Any) -> ClassificationResult:
     results = model.predict(source=image, verbose=False)
     if not results:
         return unknown_prediction()
@@ -53,9 +51,9 @@ def classify_food_image_array(image: np.ndarray) -> ClassificationResult:
     return (str(names.get(top_index, "unknown")), confidence)
 
 
-def classify_food_image(jpg_bytes: bytes) -> ClassificationResult:
+def classify_food_image(jpg_bytes: bytes, model: Any) -> ClassificationResult:
     image = decode_image(jpg_bytes)
     if image is None:
         return unknown_prediction()
 
-    return classify_food_image_array(image)
+    return classify_food_image_array(image, model)

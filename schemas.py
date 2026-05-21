@@ -14,7 +14,8 @@ class LiveFrameMessage(BaseModel):
     frame_index: int = Field(ge=0)
     total_frame: int = Field(ge=0)
     image: str
-    user_weight: float = Field(default=None, gt=0)
+    user_weight: float | None = Field(default=None, gt=0)
+    user_height: float | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def validate_frame_payload(self) -> "LiveFrameMessage":

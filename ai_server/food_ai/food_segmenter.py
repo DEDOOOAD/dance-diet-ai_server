@@ -69,8 +69,7 @@ def image_crop(result, image: np.ndarray) -> list[bytes]:
     return segmented_images
 
 
-def segment_food_image(image: np.ndarray) -> list[bytes]:
-    model = load_segment_model()
+def segment_food_image(image: np.ndarray, model: Any) -> list[bytes]:
     result = model.predict(source=image, verbose=False)
     if not result:
         return []
@@ -78,9 +77,9 @@ def segment_food_image(image: np.ndarray) -> list[bytes]:
     return image_crop(result[0], image)
 
 
-def run_segmentation_model(jpg_bytes: bytes) -> list[bytes]:
+def run_segmentation_model(jpg_bytes: bytes, model: Any) -> list[bytes]:
     image = decode_image(jpg_bytes)
     if image is None:
         return []
 
-    return segment_food_image(image)
+    return segment_food_image(image, model)

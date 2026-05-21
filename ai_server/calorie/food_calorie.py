@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from functools import lru_cache
-from pathlib import Path
-
 import pandas as pd
+from functools import lru_cache
+from ai_server.config import FOOD_DB_PATH
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-FOOD_DB_PATH = BASE_DIR / "통합 식품영양성분DB.xlsx"
 FOOD_NAME_COLUMN = "식품명"
 FOOD_CALORIE_COLUMN = "에너지(㎉)"
 
@@ -41,6 +38,5 @@ def load_food_calorie_map() -> dict[str, float]:
     return calorie_map
 
 
-def lookup_calories(label: str) -> float:
-    calorie_map = load_food_calorie_map()
+def lookup_calories(label: str, calorie_map: dict[str, float]) -> float:
     return float(calorie_map.get(label.strip().lower(), 0.0))
