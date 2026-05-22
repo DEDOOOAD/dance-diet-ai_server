@@ -104,6 +104,13 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                     )
                     continue
 
+                logger.info(
+                    "[%s] frame received: frame_index=%s total_frame=%s",
+                    session_id,
+                    frame_message.frame_index,
+                    frame_message.total_frame,
+                )
+
                 try:
                     frame_bytes = base64.b64decode(
                         frame_message.image,
@@ -124,6 +131,13 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                     )
                     continue
 
+                logger.info(
+                    "[%s] frame decoded: frame_index=%s image_bytes=%s",
+                    session_id,
+                    frame_message.frame_index,
+                    len(frame_bytes),
+                )
+
                 results = await analyze_dance(
                     session_id=frame_message.session_id,
                     frame_bytes=frame_bytes,
@@ -134,16 +148,37 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                 )
 
                 if not results:
+                    logger.info(
+                        "[%s] analysis pending: frame_index=%s no result to send",
+                        session_id,
+                        frame_message.frame_index,
+                    )
                     continue
+
+                logger.info(
+                    "[%s] analysis completed: frame_index=%s result_count=%s",
+                    session_id,
+                    frame_message.frame_index,
+                    len(results),
+                )
 
                 for result in results:
                     if hasattr(result, "model_dump"):
-                        await websocket.send_json(result.model_dump(mode="json"))
+                        result_payload = result.model_dump(mode="json")
                     else:
-                        await websocket.send_json(result)
+                        result_payload = result
 
-    except WebSocketDisconnect:
-        logger.info("[%s] main server disconnected", session_id)
+                    await websocket.send_json(result_payload)
+
+                    logger.info(
+                        "[%s] analysis result sent: calories_burned=%.6f movement_score=%.6f",
+                        session_id,
+                        result_payload.get("calories_burned", 0.0),
+                        result_payload.get("movement_score", 0.0),
+                    )
+
+    except WebSocketDisconnect as exc:
+        logger.info("[%s] main server disconnected: close_code=%s", session_id, exc.code)
 
     except Exception:
         logger.exception("[%s] unexpected error", session_id)

@@ -5,7 +5,7 @@ from functools import lru_cache
 from ai_server.config import FOOD_DB_PATH
 
 FOOD_NAME_COLUMN = "식품명"
-FOOD_CALORIE_COLUMN = "에너지(㎉)"
+FOOD_CALORIE_COLUMN = "에너지(kcal)"
 
 
 @lru_cache(maxsize=1)
@@ -13,7 +13,10 @@ def load_food_calorie_map() -> dict[str, float]:
     if not FOOD_DB_PATH.exists():
         raise FileNotFoundError(f"Food calorie DB file does not exist: {FOOD_DB_PATH}")
 
-    df = pd.read_excel(FOOD_DB_PATH, header=3)
+    if FOOD_DB_PATH.suffix.lower() == ".csv":
+        df = pd.read_csv(FOOD_DB_PATH)
+    else:
+        df = pd.read_excel(FOOD_DB_PATH, header=3)
 
     if FOOD_NAME_COLUMN not in df.columns:
         raise KeyError(f"Food calorie DB does not have '{FOOD_NAME_COLUMN}' column.")

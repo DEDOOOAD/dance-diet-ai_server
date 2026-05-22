@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 def clear_session(session_id: str) -> None:
     _SESSION_STATES.pop(session_id, None)
     clear_pose_session(session_id)
+    logger.info("[%s] dance analysis session cleared", session_id)
 
 def decode_frame(frame_bytes: bytes):
     encoded_frame = np.frombuffer(frame_bytes, dtype=np.uint8)
@@ -43,6 +44,13 @@ async def analyze_dance(
     if frame is None or frame.size == 0:
         logger.debug("[%s] failed to decode frame", session_id)
         return []
+
+    logger.info(
+        "[%s] analysis frame ready: frame_index=%s shape=%s",
+        session_id,
+        frame_index,
+        frame.shape,
+    )
 
     if frame_index is None:
         return [
@@ -92,6 +100,15 @@ async def analyze_dance(
             )
         )
         state["next_frame_index"] = ordered_index + 1
+
+    if not results:
+        logger.info(
+            "[%s] frame queued: frame_index=%s waiting_for=%s pending_count=%s",
+            session_id,
+            frame_index,
+            state["next_frame_index"],
+            len(pending_frames),
+        )
 
     return results
 
