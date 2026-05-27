@@ -4,10 +4,6 @@ from typing import Any
 from fastapi import Request
 
 
-def get_segment_model(request: Request) -> Any:
-    return request.app.state.segment_model
-
-
 def get_classifier_model(request: Request) -> Any:
     return request.app.state.classifier_model
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import cv2
+import logging
 import numpy as np
 from functools import lru_cache
 from typing import Any
 from ai_server.config import FOOD_SEGMENTER_MODEL_PATH
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -39,13 +42,20 @@ def encode_image(image: np.ndarray) -> bytes | None:
 
 def image_crop(result, image: np.ndarray) -> list[bytes]:
     if result.boxes is None or len(result.boxes) == 0:
+        logger.warning("food segmenter returned no detection boxes")
         return []
 
     boxes = result.boxes.xyxy.cpu().numpy()
+    confidences = result.boxes.conf.cpu().numpy()
+    class_ids = result.boxes.cls.cpu().numpy()
     height, width = image.shape[:2]
     segmented_images: list[bytes] = []
+    image_area = height * width
 
-    for box in boxes:
+    for box_index, (box, confidence, class_id) in enumerate(
+        zip(boxes, confidences, class_ids),
+        start=1,
+    ):
         x1, y1, x2, y2 = [int(round(float(v))) for v in box[:4]]
 
         x1 = max(0, min(x1, width))
@@ -54,7 +64,29 @@ def image_crop(result, image: np.ndarray) -> list[bytes]:
         y2 = max(0, min(y2, height))
 
         if x2 <= x1 or y2 <= y1:
+            logger.warning(
+                "food segment skipped invalid box: index=%s xyxy=(%s,%s,%s,%s)",
+                box_index,
+                x1,
+                y1,
+                x2,
+                y2,
+            )
             continue
+
+        crop_area_ratio = ((x2 - x1) * (y2 - y1)) / image_area
+        logger.info(
+            "food segment box: index=%s class_id=%s confidence=%.6f xyxy=(%s,%s,%s,%s) crop_area_ratio=%.6f masks=%s",
+            box_index,
+            int(class_id),
+            float(confidence),
+            x1,
+            y1,
+            x2,
+            y2,
+            crop_area_ratio,
+            result.masks is not None,
+        )
 
         cropped = image[y1:y2, x1:x2]
         if cropped.size == 0:

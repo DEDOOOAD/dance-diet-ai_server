@@ -9,7 +9,6 @@ from schemas import FoodAnalysisRequest, FoodAnalysisResponse
 from ai_server.dependencies import (
     get_classifier_model,
     get_food_calorie_map,
-    get_segment_model,
 )
 from ai_server.services.food_service import analyze_food
 
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 @router.post("/analyze", response_model=FoodAnalysisResponse)
 def food_analyze(
     request: FoodAnalysisRequest,
-    segment_model: Any = Depends(get_segment_model),
     classifier_model: Any = Depends(get_classifier_model),
     calorie_map: dict[str, float] = Depends(get_food_calorie_map),
 ) -> FoodAnalysisResponse:
@@ -40,16 +38,17 @@ def food_analyze(
             detail="Image payload is empty.",
         )
 
-    if request.image_bytes is None:
-        logger.info("image_bytes is empty")
-
-    logger.info("image_base64 decoded successfully")
+    logger.info(
+        "image_base64 decoded successfully: uuid=%s image_bytes=%s",
+        request.uuid,
+        len(jpg_bytes),
+    )
 
     try:
         return analyze_food(
             request.uuid,
             jpg_bytes,
-            segment_model,
+            request.image_filename,
             classifier_model,
             calorie_map,
         )

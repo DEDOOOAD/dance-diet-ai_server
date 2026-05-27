@@ -42,6 +42,7 @@ class AiLiveAnalysisMessage(BaseModel):
 class FoodAnalysisRequest(BaseModel):
     uuid: str
     image_base64: str
+    image_filename: str | None = None
 
 class FoodItem(BaseModel):
     label: str
@@ -51,3 +52,8 @@ class FoodItem(BaseModel):
 class FoodAnalysisResponse(BaseModel):
     uuid: str
     foods: list[FoodItem] = Field(default_factory=list)
+    total_calories: float
+    image_filename: str | None = None
+    source: str
+    analyzed_at: datetime
+    note: str | None = None

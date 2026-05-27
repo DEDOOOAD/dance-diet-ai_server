@@ -17,3 +17,6 @@ __dance_diet_client_mobile_tmp/
 
 # Model
 ai_server/models/*.pt
+
+# Temporary food segmentation debug images
+ai_server/data/debug_segments/

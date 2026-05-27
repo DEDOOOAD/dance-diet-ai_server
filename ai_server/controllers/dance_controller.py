@@ -24,6 +24,7 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
     websocket.app.state.pose_detectors[session_id] = pose_detector
 
     logger.info("[%s] main server connected", session_id)
+    await websocket.send_json({"type": "ai_ready"})
 
     try:
         while True:
@@ -49,7 +50,6 @@ async def dance_analyze(websocket: WebSocket, session_id: str):
                 await websocket.send_json(
                     {
                         "type": "ai_ready",
-                        "session_id": session_id,
                     }
                 )
                 continue

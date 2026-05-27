@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import logging.config
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from ai_server.calorie.food_calorie import load_food_calorie_map
-from ai_server.config import APP_NAME, HOST, PORT
+from ai_server.config import APP_NAME
 from ai_server.controllers.dance_controller import router as dance_router
 from ai_server.controllers.food_controller import router as food_router
 from ai_server.food_ai.food_classifier import load_classifier_model
-from ai_server.food_ai.food_segmenter import load_segment_model
 
 
 LOGGING_CONFIG = {
@@ -58,9 +58,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("initializing application resources")
     try:
-        app.state.segment_model = load_segment_model()
-        logger.info("food segmentation model loaded")
-
         app.state.classifier_model = load_classifier_model()
         logger.info("food classification model loaded")
 
@@ -88,5 +85,29 @@ app = FastAPI(
 app.include_router(dance_router)
 app.include_router(food_router)
 
-if __name__ == "__main__":
-    uvicorn.run("ai_server.server:app", host=HOST, port=PORT, reload=False)
+
+def get_http_route_summary() -> str:
+    http_routes: list[str] = []
+
+    for route in app.routes:
+        methods = getattr(route, "methods", None)
+        path = getattr(route, "path", None)
+        if not methods or not path:
+            continue
+
+        http_routes.append(f"{','.join(sorted(methods))} {path}")
+
+    return "; ".join(http_routes)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def log_http_exception(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        logger.warning(
+            "route not found: method=%s path=%s registered_http_routes=%s",
+            request.method,
+            request.url.path,
+            get_http_route_summary(),
+        )
+
+    return await http_exception_handler(request, exc)
