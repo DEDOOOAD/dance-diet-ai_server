@@ -3,9 +3,12 @@ AI Server
 
 Run the server from the project root so Python can resolve the `ai_server` package:
 
-```powershell
+- 실행 명령어
 uv run python main.py
-```
+
+- .env 파일 구성
+GEMINI_API_KEY=
+GEMINI_FOOD_VISION_MODEL=gemini-2.5-flash-lite
 
 For development with FastAPI reload:
 
