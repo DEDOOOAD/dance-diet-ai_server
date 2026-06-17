@@ -12,7 +12,7 @@ from ai_server.dependencies import (
 )
 from ai_server.services.food_service import analyze_food
 
-router = APIRouter(prefix="/food", tags=["food"])
+router = APIRouter(prefix="/api/food", tags=["food"])
 logger = logging.getLogger(__name__)
 
 

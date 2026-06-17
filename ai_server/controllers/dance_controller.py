@@ -10,7 +10,7 @@ from ai_server.services.dance_service import analyze_dance, clear_session
 from schemas import LiveFrameMessage
 
 router = APIRouter(prefix="/ws/dance", tags=["dance"])
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 
 @router.websocket("/analyze/{session_id}")

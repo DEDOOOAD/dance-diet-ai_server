@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import logging.config
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from uvicorn.config import LOGGING_CONFIG as UVICORN_LOGGING_CONFIG
 from ai_server.calorie.food_calorie import load_food_calorie_map
 from ai_server.config import APP_NAME
 from ai_server.controllers.dance_controller import router as dance_router
@@ -12,42 +14,11 @@ from ai_server.controllers.food_controller import router as food_router
 from ai_server.food_ai.food_classifier import load_classifier_model
 
 
-LOGGING_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        },
-    },
-    "handlers": {
-        "default": {
-            "class": "logging.StreamHandler",
-            "formatter": "default",
-            "stream": "ext://sys.stdout",
-        },
-    },
-    "root": {
-        "level": "INFO",
-        "handlers": ["default"],
-    },
-    "loggers": {
-        "uvicorn": {
-            "level": "INFO",
-            "handlers": ["default"],
-            "propagate": False,
-        },
-        "uvicorn.error": {
-            "level": "INFO",
-            "handlers": ["default"],
-            "propagate": False,
-        },
-        "uvicorn.access": {
-            "level": "INFO",
-            "handlers": ["default"],
-            "propagate": False,
-        },
-    },
+LOGGING_CONFIG = deepcopy(UVICORN_LOGGING_CONFIG)
+LOGGING_CONFIG["loggers"]["ai_server"] = {
+    "level": "INFO",
+    "handlers": ["default"],
+    "propagate": False,
 }
 
 logging.config.dictConfig(LOGGING_CONFIG)
